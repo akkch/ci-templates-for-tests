@@ -77,17 +77,5 @@ jobs:
       - name: Pack NuGet package
         run: nuget pack "${{ inputs.nuspec_path }}"
 
-      #- name: Publish NuGet package to GitHub Packages (Private)
-      #  run: nuget push *.nupkg -Source "internal" -ApiKey ${{ secrets.token }}
-
-      - name: Publish to GitHub Packages
-        run: |
-          # Add GitHub Packages as a NuGet source.
-          # The username is your GitHub username or organization name.
-          # The password is the GITHUB_TOKEN.
-          # The store-password-in-clear-text flag is safe to use in the ephemeral Actions runner.
-          nuget sources Add -Name "github" -Source "https://nuget.pkg.github.com/akkch/index.json" -UserName "akkch" -Password "${{ secrets.GITHUB_TOKEN }}" -StorePasswordInClearText
-
-          # Push the package. The ApiKey can be any non-empty string, but using the token is standard.
-          # The source name 'github' must match the name you added above.
-          nuget push *.nupkg -Source "github" -ApiKey "${{ secrets.GITHUB_TOKEN }}" -NoSymbols
+      - name: Publish NuGet package to GitHub Packages (Private)
+        run: nuget push *.nupkg -Source "internal" -ApiKey ${{ secrets.token }}

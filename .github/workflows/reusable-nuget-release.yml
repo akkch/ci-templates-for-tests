@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.3.0
 
       - name: Conditionally download artifact
         if: ${{ inputs.artifact_name && inputs.artifact_path }}

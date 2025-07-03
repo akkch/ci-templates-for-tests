@@ -3,6 +3,15 @@ name: Build and Release NuGet Package (.NET Framework 4.8.1)
 on:
   workflow_call:
     inputs:
+      project_path:
+        required: true
+        type: string
+      nuspec_path:
+        required: true
+        type: string
+      solution_path:
+        required: true
+        type: string
       runner_label:
         type: string
         required: false
@@ -24,7 +33,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
 
       - name: Conditionally download artifact
         if: ${{ inputs.artifact_name && inputs.artifact_path }}
@@ -33,16 +42,40 @@ jobs:
         with:
           name: ${{ inputs.artifact_name }}
           path: ${{ inputs.artifact_path }}
-
-      - name: List contents of a specific folder (Windows)
-        shell: powershell
-        run: |
-          # Note the single quotes around the expression
-          $targetFolder = '${{ inputs.artifact_path }}'
           
-          if (Test-Path $targetFolder) {
-            Write-Host "--- Listing contents of '$targetFolder' ---"
-            Get-ChildItem -Path $targetFolder
-          } else {
-            Write-Host "--- Folder '$targetFolder' not found. ---"
-          }
+      - name: Setup NuGet CLI
+        uses: NuGet/setup-nuget@v1
+
+      - name: Add internal NuGet feed
+        shell: pwsh
+        run: |
+          nuget sources add `
+            -Name "internal" `
+            -Source "https://nuget.pkg.github.com/ORMAT-CONTROL/index.json" `
+            -Username "${{ github.actor }}" `
+            -Password "${{ secrets.token }}" `
+            -StorePasswordInClearText
+            
+      - name: Update version in .nuspec from tag
+        shell: pwsh
+        run: |
+          # get version from tag (remove 'v')
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          Write-Host "Version from tag: $version"
+          (Get-Content "${{ inputs.nuspec_path }}" -Raw) -replace '<version>.*?</version>', "<version>$version</version>" |
+          Set-Content "${{ inputs.nuspec_path }}" -Encoding utf8
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.3.1
+        
+      - name: Restore packages
+        run: nuget restore "${{ inputs.solution_path }}"
+
+      - name: Build project
+        run: msbuild "${{ inputs.project_path }}" /p:Configuration=Release
+
+      - name: Pack NuGet package
+        run: nuget pack "${{ inputs.nuspec_path }}"
+
+      - name: Publish NuGet package to GitHub Packages (Private)
+        run: nuget push *.nupkg -Source "internal" -ApiKey ${{ secrets.token }}

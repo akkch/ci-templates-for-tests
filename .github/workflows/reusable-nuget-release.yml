@@ -37,7 +37,8 @@ jobs:
       - name: List contents of a specific folder (Windows)
         shell: powershell
         run: |
-          $targetFolder =  ${{ inputs.artifact_path }}
+          # Note the single quotes around the expression
+          $targetFolder = '${{ inputs.artifact_path }}'
           
           if (Test-Path $targetFolder) {
             Write-Host "--- Listing contents of '$targetFolder' ---"

@@ -51,7 +51,7 @@ jobs:
         run: |
           nuget sources add `
             -Name "internal" `
-            -Source "https://nuget.pkg.github.com/ORMAT-CONTROL/index.json" `
+            -Source "https://nuget.pkg.github.com/akkch/index.json" `
             -Username "${{ github.actor }}" `
             -Password "${{ secrets.token }}" `
             -StorePasswordInClearText
